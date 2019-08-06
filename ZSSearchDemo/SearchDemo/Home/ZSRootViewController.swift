@@ -68,11 +68,12 @@ class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDa
     
     //MARK: scrollviewDelegate
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let contentOffsetY = scrollView.contentOffset.y
-        let maxY = CGStatusBarHeight
+        let contentOffsetYContainInset = scrollView.contentOffset.y + scrollView.contentInset.top
+        print("contentOffsetYContainInset = \(contentOffsetYContainInset)")
+        let maxY = searchController.searchBar.height
         var adjustY = CGFloat(0)
-        if contentOffsetY > 0 {
-            adjustY = min(contentOffsetY, maxY)
+        if contentOffsetYContainInset > 0 {
+            adjustY = min(contentOffsetYContainInset, maxY)
             adjustY *= -1
         } else {
             adjustY = CGFloat(0)
