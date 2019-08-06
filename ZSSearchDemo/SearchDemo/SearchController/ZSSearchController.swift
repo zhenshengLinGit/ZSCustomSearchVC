@@ -39,20 +39,35 @@ class ZSSearchController: UIViewController {
     
     private lazy var bgView: UIView = {
         var _bgView = UIView.init(frame: CGRect.init(x: 0, y: self.searchBar.frame.maxY + CGSafeAreaTopHeight, width: kScreenWidth, height: kScreenHeight - self.searchBar.height - CGStatusBarHeight))
-        _bgView.backgroundColor = UIColor.lightGray
+//        _bgView.backgroundColor = UIColor.lightGray
         let tapGestureRecognizer = UITapGestureRecognizer.init(target: self, action: #selector(endSearchTextFieldEditing(_:)))
         tapGestureRecognizer.cancelsTouchesInView = false
         _bgView.addGestureRecognizer(tapGestureRecognizer)
         return _bgView
     }()
-
+    
     lazy var searchBar: ZSSearchBar = {
         var _searchBar = ZSSearchBar.init(frame: CGRect.zero)
+        _searchBar.backgroundColor = searchBarBackgroudColor
         self.searchBarTapGesture = UITapGestureRecognizer.init(target: self, action: #selector(tapSearchBarAction))
         _searchBar.addGestureRecognizer(self.searchBarTapGesture)
         _searchBar.addObserver(self, forKeyPath: "text", options: [.new, .old], context: nil)
         return _searchBar
     }()
+
+    // 在编辑状态下，展示出搜索框的背景view，遮盖在状态栏上
+    private lazy var searchBarBackgroudViewWhenEdit: UIView = {
+        var _searchBarBackgroudViewWhenEdit = UIView()
+        _searchBarBackgroudViewWhenEdit.backgroundColor = searchBarBackgroudColor
+        return _searchBarBackgroudViewWhenEdit
+    }()
+    
+    var searchBarBackgroudColor: UIColor = UIColor.white {
+        didSet {
+            searchBar.backgroundColor = searchBarBackgroudColor
+            searchBarBackgroudViewWhenEdit.backgroundColor = searchBarBackgroudColor
+        }
+    }
     
     var searchResultsController: UIViewController?
     var searchBarTapGesture: UITapGestureRecognizer!
@@ -94,8 +109,15 @@ class ZSSearchController: UIViewController {
         // 去掉导航栏，更新位置
         if let parent = self.searchBar.locate_viewController?.parent as? UINavigationController {
             parent.setNavigationBarHidden(true, animated: true)
+            // 给搜索框的父view添加背景view
+            if let searchParent = self.searchBar.superview {
+                searchParent.insertSubview(self.searchBarBackgroudViewWhenEdit, belowSubview: self.searchBar)
+                self.searchBarBackgroudViewWhenEdit.frame = CGRect.init(x: 0, y: 0, width: kScreenWidth, height: CGStatusBarHeight)
+            }
             UIView.animate(withDuration: 0.2) {
+                self.searchBar.y = CGStatusBarHeight
                 self.bgView.y = CGSafeAreaTopHeight
+                self.searchBarBackgroudViewWhenEdit.height = CGSafeAreaTopHeight
             }
         }
         self.searchBarTapGesture.isEnabled = false
@@ -114,6 +136,14 @@ class ZSSearchController: UIViewController {
         if self.searchBar.locate_viewController?.parent != nil {
             if let navVc = self.searchBar.locate_viewController?.parent as? UINavigationController {
                 navVc.setNavigationBarHidden(false, animated: true)
+                searchBar.y = 0
+                if searchBarBackgroudViewWhenEdit.superview != nil {
+                    UIView.animate(withDuration: 0.2, animations: {
+                        self.searchBarBackgroudViewWhenEdit.height = CGStatusBarHeight
+                    }) { (bool) in
+                        self.searchBarBackgroudViewWhenEdit.removeFromSuperview()
+                    }
+                }
                 self.bgView.y = self.searchBar.frame.maxY + CGSafeAreaTopHeight
             }
         }

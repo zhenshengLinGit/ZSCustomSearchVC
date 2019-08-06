@@ -13,7 +13,7 @@ class ZSSearchResultController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.view.backgroundColor = UIColor.red
+        self.view.backgroundColor = UIColor.clear
     }
 
     override func didReceiveMemoryWarning() {
