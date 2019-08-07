@@ -116,8 +116,8 @@ class ZSSearchController: UIViewController {
             }
             UIView.animate(withDuration: 0.2) {
                 self.searchBar.y = CGStatusBarHeight
-                self.bgView.y = CGSafeAreaTopHeight
-                self.searchBarBackgroudViewWhenEdit.height = CGSafeAreaTopHeight
+                self.bgView.y = self.searchBar.frame.maxY
+                self.searchBarBackgroudViewWhenEdit.height = self.searchBar.frame.maxY
             }
         }
         self.searchBarTapGesture.isEnabled = false
