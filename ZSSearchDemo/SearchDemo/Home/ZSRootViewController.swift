@@ -8,16 +8,15 @@
 
 import UIKit
 
-class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, ZSSearchControllerDelegate, ZSSearchControllerhResultsUpdating, ZSSearchBarDelegate {
+class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, ZSSearchViewControllerDelegate, ZSSearchBarDelegate {
 
 
-    lazy var searchController: ZSSearchController = {
+    lazy var searchController: ZSSearchViewController = {
         let resultVc = ZSSearchResultController.init(nibName: nil, bundle: nil)
-        var _searchController = ZSSearchController.init(searchResultsController: resultVc)
+        var _searchController = ZSSearchViewController.init(searchResultsController: resultVc)
         _searchController.searchBarBackgroudColor = UIColor.themeColor
         _searchController.searchBar.placeholder = "搜索"
         _searchController.searchBar.cancelButton.setTitleColor(UIColor.white, for: UIControlState.normal)
-        _searchController.searchResultsUpdater = self
         _searchController.delegate = self
         _searchController.searchBar.delegate = self
         return _searchController
@@ -40,13 +39,17 @@ class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = UIColor.white
-        self.navigationController?.navigationBar.setBackgroundImage(UIColor.themeColor.imageIn(size: CGSize.init(width: kScreenWidth, height: CGFloat(CGSafeAreaTopHeight))), for: UIBarMetrics.default)
+        self.navigationController?.navigationBar.setBackgroundImage(UIColor.themeColor.imageIn(size: CGSize.init(width: SCREEN_WIDTH, height: CGFloat(CGSafeAreaTopHeight))), for: UIBarMetrics.default)
         self.navigationController?.navigationBar.shadowImage = UIImage()
         self.view.addSubview(searchController.searchBar)
-        searchController.searchBar.y = 0
-        tableView.frame = CGRect.init(x: 0, y: 0, width: kScreenWidth, height: kScreenHeight - CGSafeAreaTopHeight)
-        tableView.contentInset = UIEdgeInsets.init(top: searchController.searchBar.y + searchController.searchBar.height, left: 0, bottom: 0, right: 0)
+        searchController.searchBar.top = 0
+        tableView.frame = CGRect.init(x: 0, y: 0, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - CGSafeAreaTopHeight)
+        tableView.contentInset = UIEdgeInsets.init(top: searchController.searchBar.top + searchController.searchBar.height, left: 0, bottom: 0, right: 0)
         self.view.insertSubview(tableView, belowSubview: searchController.searchBar)
+    }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        return .lightContent
     }
     
     // UITableViewDataSource
@@ -66,6 +69,11 @@ class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDa
         return CGFloat(44)
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let pushVC = PushViewController()
+        self.navigationController?.pushViewController(pushVC, animated: true)
+    }
+    
     //MARK: scrollviewDelegate
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let contentOffsetYContainInset = scrollView.contentOffset.y + scrollView.contentInset.top
@@ -78,15 +86,16 @@ class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDa
         } else {
             adjustY = CGFloat(0)
         }
-        if searchController.searchBar.y != adjustY {
-            searchController.searchBar.y = adjustY
+        // 判断searchBar不在编辑状态下，才调整top值。（编辑状态下由searchController来调整）
+        if searchController.searchBar.top != adjustY, !searchController.searchBar.isEditing {
+            searchController.searchBar.top = adjustY
         }
     }
     
-    //MARK: ZSSearchControllerhResultsUpdating
-    func updateSearchResultsForSearchController(_ searchController: ZSSearchController) {
-        let searchText = searchController.searchBar.text
-        print("当前搜索框的内容为 \(searchText ?? "")")
+    // 搜索关键字输入
+    func searchBar(_ searchBar: ZSSearchBar, textDidChange searchText: String) {
+        let key = searchText
+        print("当前搜索框的内容为\(key)")
     }
 }
 

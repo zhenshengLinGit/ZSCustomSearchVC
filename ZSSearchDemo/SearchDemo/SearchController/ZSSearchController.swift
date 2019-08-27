@@ -8,38 +8,26 @@
 
 import UIKit
 
-protocol ZSSearchControllerDelegate: class {
-    func willPresentSearchController(_ searchController: ZSSearchController)
-    func didPresentSearchController(_ searchController: ZSSearchController)
-    func willDismissSearchController(_ searchController: ZSSearchController)
-    func didDismissSearchController(_ searchController: ZSSearchController)
+protocol ZSSearchViewControllerDelegate: class {
+    func willPresentSearchController(_ searchController: ZSSearchViewController)
+    func didPresentSearchController(_ searchController: ZSSearchViewController)
+    func willDismissSearchController(_ searchController: ZSSearchViewController)
+    func didDismissSearchController(_ searchController: ZSSearchViewController)
 }
 
 // 扩展是为了是协议里的方法可选
-extension ZSSearchControllerDelegate {
-    func willPresentSearchController(_ searchController: ZSSearchController) {}
-    func didPresentSearchController(_ searchController: ZSSearchController) {}
-    func willDismissSearchController(_ searchController: ZSSearchController) {}
-    func didDismissSearchController(_ searchController: ZSSearchController) {}
+extension ZSSearchViewControllerDelegate {
+    func willPresentSearchController(_ searchController: ZSSearchViewController) {}
+    func didPresentSearchController(_ searchController: ZSSearchViewController) {}
+    func willDismissSearchController(_ searchController: ZSSearchViewController) {}
+    func didDismissSearchController(_ searchController: ZSSearchViewController) {}
 }
 
-protocol ZSSearchControllerhResultsUpdating {
-    func updateSearchResultsForSearchController(_ searchController: ZSSearchController)
-}
-
-extension ZSSearchControllerhResultsUpdating {
-    func updateSearchResultsForSearchController(_ searchController: ZSSearchController) {}
-}
-
-class ZSSearchController: UIViewController {
-
-    deinit {
-        searchBar.removeObserver(self, forKeyPath: "text")
-    }
+class ZSSearchViewController: UIViewController {
     
     private lazy var bgView: UIView = {
-        var _bgView = UIView.init(frame: CGRect.init(x: 0, y: self.searchBar.frame.maxY + CGSafeAreaTopHeight, width: kScreenWidth, height: kScreenHeight - self.searchBar.height - CGStatusBarHeight))
-//        _bgView.backgroundColor = UIColor.lightGray
+        var _bgView = UIView.init(frame: CGRect.init(x: 0, y: self.searchBar.frame.maxY + CGSafeAreaTopHeight, width: SCREEN_WIDTH, height: SCREEN_HEIGHT - self.searchBar.height - CGStatusBarHeight))
+        //        _bgView.backgroundColor = UIColor.lightGray
         let tapGestureRecognizer = UITapGestureRecognizer.init(target: self, action: #selector(endSearchTextFieldEditing(_:)))
         tapGestureRecognizer.cancelsTouchesInView = false
         _bgView.addGestureRecognizer(tapGestureRecognizer)
@@ -51,11 +39,10 @@ class ZSSearchController: UIViewController {
         _searchBar.backgroundColor = searchBarBackgroudColor
         self.searchBarTapGesture = UITapGestureRecognizer.init(target: self, action: #selector(tapSearchBarAction))
         _searchBar.addGestureRecognizer(self.searchBarTapGesture)
-        _searchBar.addObserver(self, forKeyPath: "text", options: [.new, .old], context: nil)
         return _searchBar
     }()
-
-    // 在编辑状态下，展示出搜索框的背景view，遮盖在状态栏上
+    
+    // 在编辑状态下，展示出搜索框的背景view，遮盖在状态栏上（还原导航栏隐藏的过渡动画效果）
     private lazy var searchBarBackgroudViewWhenEdit: UIView = {
         var _searchBarBackgroudViewWhenEdit = UIView()
         _searchBarBackgroudViewWhenEdit.backgroundColor = searchBarBackgroudColor
@@ -72,9 +59,7 @@ class ZSSearchController: UIViewController {
     var searchResultsController: UIViewController?
     var searchBarTapGesture: UITapGestureRecognizer!
     
-    weak var delegate: ZSSearchControllerDelegate?
-    
-    var searchResultsUpdater: ZSSearchControllerhResultsUpdating?
+    weak var delegate: ZSSearchViewControllerDelegate?
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -83,13 +68,12 @@ class ZSSearchController: UIViewController {
     init(searchResultsController: UIViewController?) {
         super.init(nibName: nil, bundle: nil)
         self.searchResultsController = searchResultsController
+        self.searchResultsController?.ttSearchBar = searchBar
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.addSubview(bgView)
-        // ps❗️：这里设置upTouchRect是为了将触摸事件传递给 搜索框
-        self.view.unTouchRect = CGRect.init(x: 0, y: 0, width: self.view.width, height: CGSafeAreaTopHeight)
         self.searchResultsController?.view.frame = self.bgView.bounds
         if self.searchResultsController != nil {
             self.bgView.addSubview(self.searchResultsController!.view)
@@ -98,26 +82,43 @@ class ZSSearchController: UIViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(endSearch), name: NSNotification.Name.init(SEARCH_CANCEL_NOTIFICATION_KEY), object: nil)
     }
     
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        // ps❗️：这里设置upTouchRect是为了将触摸事件传递给 搜索框
+        self.view.unTouchRect = CGRect.init(x: 0, y: 0, width: self.view.width, height: CGSafeAreaTopHeight)
+        self.view.frame = CGRect.init(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+    }
+    
     // event方法
     @objc func tapSearchBarAction() {
         self.delegate?.willPresentSearchController(self)
-        // 将当前vc的view添加到window上
-        UIApplication.shared.keyWindow?.rootViewController?.view.addSubview(self.view)
-        self.delegate?.didPresentSearchController(self)
         // 让搜索框进入编辑状态
         self.searchBar.isEditing = true
         // 去掉导航栏，更新位置
-        if let parent = self.searchBar.locate_viewController?.parent as? UINavigationController {
+        if let parent = self.searchBar.viewController?.parent as? UINavigationController {
             parent.setNavigationBarHidden(true, animated: true)
             // 给搜索框的父view添加背景view
             if let searchParent = self.searchBar.superview {
                 searchParent.insertSubview(self.searchBarBackgroudViewWhenEdit, belowSubview: self.searchBar)
-                self.searchBarBackgroudViewWhenEdit.frame = CGRect.init(x: 0, y: 0, width: kScreenWidth, height: CGStatusBarHeight)
+                self.searchBarBackgroudViewWhenEdit.isHidden = false
+                self.searchBarBackgroudViewWhenEdit.frame = CGRect.init(x: 0, y: -CGStatusBarHeight, width: SCREEN_WIDTH, height: CGStatusBarHeight + self.searchBar.frame.height)
             }
-            UIView.animate(withDuration: 0.2) {
-                self.searchBar.y = CGStatusBarHeight
-                self.bgView.y = self.searchBar.frame.maxY
-                self.searchBarBackgroudViewWhenEdit.height = self.searchBar.frame.maxY
+            // 做过渡动画
+            // 将self.view添加到searchBar所有的控制器view上，同时隐藏tabBar
+            self.searchBar.viewController?.view.addSubview(self.view)
+            self.searchBar.viewController?.addChildViewController(self)
+            self.bgView.top = self.searchBar.frame.maxY
+            self.bgView.alpha = 0.9
+            UIView.animate(withDuration: 0.2, animations: {
+                self.searchBar.top = CGStatusBarHeight
+                self.bgView.top = self.searchBar.frame.maxY
+                self.searchBarBackgroudViewWhenEdit.top = 0
+                self.bgView.alpha = 1
+            }) { (finish) in
+                self.delegate?.didPresentSearchController(self)
+                if let tabVc = self.searchBar.viewController?.tabBarController {
+                    tabVc.tabBar.isHidden = true
+                }
             }
         }
         self.searchBarTapGesture.isEnabled = false
@@ -129,30 +130,46 @@ class ZSSearchController: UIViewController {
     
     @objc func endSearch() {
         self.delegate?.willDismissSearchController(self)
-        // 移除自己
+        // 移除自己，并显示tabBar
         self.view.removeFromSuperview()
+        self.removeFromParentViewController()
+        if let tabVc = self.searchBar.viewController?.tabBarController {
+            tabVc.tabBar.isHidden = false
+        }
         self.delegate?.didDismissSearchController(self)
         self.searchBar.isEditing = false
-        if self.searchBar.locate_viewController?.parent != nil {
-            if let navVc = self.searchBar.locate_viewController?.parent as? UINavigationController {
-                navVc.setNavigationBarHidden(false, animated: true)
-                searchBar.y = 0
+        if self.searchBar.viewController?.parent != nil {
+            if let navVc = self.searchBar.viewController?.parent as? UINavigationController {
+                // 这里不做动画效果，原因是当导航控制器push了一层后，原先searchBar所在的控制器的view的y值会下移，导致searchBar会有个从下方回到原来位置的动画bug
+                navVc.setNavigationBarHidden(false, animated: false)
                 if searchBarBackgroudViewWhenEdit.superview != nil {
-                    UIView.animate(withDuration: 0.2, animations: {
-                        self.searchBarBackgroudViewWhenEdit.height = CGStatusBarHeight
+                    UIView.animate(withDuration: 0, animations: {
+                        self.searchBarBackgroudViewWhenEdit.isHidden = true
+                        self.searchBar.top = 0
                     }) { (bool) in
                         self.searchBarBackgroudViewWhenEdit.removeFromSuperview()
                     }
                 }
-                self.bgView.y = self.searchBar.frame.maxY + CGSafeAreaTopHeight
             }
         }
         self.searchBarTapGesture.isEnabled = true
     }
     
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == "text" {
-            self.searchResultsUpdater?.updateSearchResultsForSearchController(self)
+}
+
+
+var SearchBar_VC_KEY = "TT_SearchBar_VC_KEY"
+extension UIViewController {
+    // 添加ttSearchBar属性
+    weak var ttSearchBar: ZSSearchBar? {
+        set {
+            objc_setAssociatedObject(self, &SearchBar_VC_KEY, newValue, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+        get {
+            if let _ttSearchBar = objc_getAssociatedObject(self, &SearchBar_VC_KEY) as? ZSSearchBar {
+                return _ttSearchBar
+            }
+            return nil
         }
     }
 }

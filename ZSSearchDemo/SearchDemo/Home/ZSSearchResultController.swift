@@ -13,7 +13,7 @@ class ZSSearchResultController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.view.backgroundColor = UIColor.clear
+        self.view.backgroundColor = UIColor.white
     }
 
     override func didReceiveMemoryWarning() {
@@ -21,7 +21,16 @@ class ZSSearchResultController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+    }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.navigationController?.setNavigationBarHidden(true, animated: false)
+        self.tabBarController?.tabBar.isHidden = true
+    }
+    
     /*
     // MARK: - Navigation
 

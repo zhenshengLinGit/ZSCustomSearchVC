@@ -21,6 +21,7 @@
 		104D326822EB0CF300CA5F57 /* ZSSearchTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 104D326722EB0CF300CA5F57 /* ZSSearchTextField.swift */; };
 		104D326A22EB0D2100CA5F57 /* ZSSearchBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 104D326922EB0D2100CA5F57 /* ZSSearchBar.swift */; };
 		105CA57022F82ABC00C0D97A /* UIColor+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105CA56F22F82ABC00C0D97A /* UIColor+Extension.swift */; };
+		10DA1850230CDC6C002C0B08 /* PushViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10DA184F230CDC6C002C0B08 /* PushViewController.swift */; };
 		D20CBDF322EC321F00AFB14F /* ZSCommon.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20CBDF222EC321F00AFB14F /* ZSCommon.swift */; };
 		D20CBDF522ED561300AFB14F /* UIView+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20CBDF422ED561300AFB14F /* UIView+Extension.swift */; };
 		D20CBDF722ED626200AFB14F /* ZSSearchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20CBDF622ED626200AFB14F /* ZSSearchController.swift */; };
@@ -66,6 +67,7 @@
 		104D326722EB0CF300CA5F57 /* ZSSearchTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZSSearchTextField.swift; sourceTree = "<group>"; };
 		104D326922EB0D2100CA5F57 /* ZSSearchBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZSSearchBar.swift; sourceTree = "<group>"; };
 		105CA56F22F82ABC00C0D97A /* UIColor+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extension.swift"; sourceTree = "<group>"; };
+		10DA184F230CDC6C002C0B08 /* PushViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushViewController.swift; sourceTree = "<group>"; };
 		D20CBDF222EC321F00AFB14F /* ZSCommon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZSCommon.swift; sourceTree = "<group>"; };
 		D20CBDF422ED561300AFB14F /* UIView+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIView+Extension.swift"; sourceTree = "<group>"; };
 		D20CBDF622ED626200AFB14F /* ZSSearchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZSSearchController.swift; sourceTree = "<group>"; };
@@ -189,6 +191,7 @@
 				104D326322EB016200CA5F57 /* ZSFindViewController.swift */,
 				104D326522EB016C00CA5F57 /* ZSMeViewController.swift */,
 				D2F18FF522EDA44D00A708CB /* ZSSearchResultController.swift */,
+				10DA184F230CDC6C002C0B08 /* PushViewController.swift */,
 			);
 			path = Home;
 			sourceTree = "<group>";
@@ -325,6 +328,7 @@
 			files = (
 				104D325E22EAFDD800CA5F57 /* ZSNavigationController.swift in Sources */,
 				D20CBDF322EC321F00AFB14F /* ZSCommon.swift in Sources */,
+				10DA1850230CDC6C002C0B08 /* PushViewController.swift in Sources */,
 				104D326622EB016C00CA5F57 /* ZSMeViewController.swift in Sources */,
 				D20CBDF722ED626200AFB14F /* ZSSearchController.swift in Sources */,
 				104D326822EB0CF300CA5F57 /* ZSSearchTextField.swift in Sources */,

@@ -8,7 +8,9 @@
 
 import UIKit
 
+
 let SEARCH_CANCEL_NOTIFICATION_KEY = "SEARCH_CANCEL_NOTIFICATION_KEY"
+let SEARCH_RESIGN_NOTIFICATION_KEY = "SEARCH_RESIGN_NOTIFICATION_KEY"  //取消第一响应者
 
 protocol ZSSearchBarDelegate: class {
     func searchBarTextDidBeginEditing(_ searchBar: ZSSearchBar)
@@ -24,35 +26,45 @@ extension ZSSearchBarDelegate {
 
 class ZSSearchBar: UIView, UITextFieldDelegate {
     
+    // 当存在时，搜索框有返回按钮
+    var showBack: Bool = false {
+        didSet {
+            self.setupFrame()
+        }
+    }
+    
     var placeholder: String? {
         didSet {
             self.searchTextField.placeholder = placeholder
         }
     }
     
+    var animateWhenChangeEditing: Bool = true
     var isEditing: Bool = false {
         didSet {
             if isEditing {
                 // 添加动画
-                UIView.animate(withDuration: 0.2, animations: {
-                    self.searchTextField.x = 10
-                    self.rightButton.x = kScreenWidth - 38 - 40
-                    self.backgroudImageView.width = kScreenWidth - 20 - 40
-                    self.cancelButton.x = kScreenWidth - 40
+                UIView.animate(withDuration: animateWhenChangeEditing ? 0.2 : 0, animations: {
+                    self.searchTextField.left = self.backButton.right
+                    self.rightButton.left = SCREEN_WIDTH - self.rightButton.width - self.cancelButton.width
+                    self.backgroudImageView.width = SCREEN_WIDTH - self.backButton.right - self.cancelButton.width
+                    self.cancelButton.left = SCREEN_WIDTH - self.cancelButton.width
                 }) { (finished) in
-                    self.searchTextField.width = kScreenWidth - 20 - 38 - 40
+                    self.searchTextField.width = SCREEN_WIDTH - self.backButton.right - 10 - self.rightButton.width - self.cancelButton.width
                 }
                 searchTextField.canTouch = true
-                searchTextField.becomeFirstResponder()
+                if animateWhenChangeEditing {
+                    searchTextField.becomeFirstResponder()
+                }
             } else {
-                text = nil
-                UIView.animate(withDuration: 0.2, animations: {
-                    self.searchTextField.x = kScreenWidth * 0.5 - 40
-                    self.rightButton.x = kScreenWidth - 38
-                    self.backgroudImageView.width = kScreenWidth - 20
-                    self.cancelButton.x = kScreenWidth
+                text = ""
+                UIView.animate(withDuration: animateWhenChangeEditing ? 0.2 : 0, animations: {
+                    self.searchTextField.left = SCREEN_WIDTH * 0.5 - 40
+                    self.rightButton.left = SCREEN_WIDTH - 38
+                    self.backgroudImageView.width = SCREEN_WIDTH - self.backButton.right - 10
+                    self.cancelButton.left = SCREEN_WIDTH
                 }) { (finished) in
-                    self.searchTextField.width = kScreenWidth * 0.5
+                    self.searchTextField.width = SCREEN_WIDTH * 0.5
                 }
                 searchTextField.canTouch = false
                 searchTextField.resignFirstResponder()
@@ -60,12 +72,14 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
         }
     }
     
-    @objc dynamic var text: String? {
+    @objc dynamic var text: String = "" {
         didSet {
             if text != self.searchTextField.text {
-                self.searchTextField.text = text ?? ""
+                self.searchTextField.text = text
+                // 给TextField.text主动赋值的时候，不会触发editingChanged事件，主动调用
+                delegate?.searchBar(self, textDidChange: text)
             }
-            rightButton.isHidden = (text?.count == 0 || text == nil) ? true : false
+            rightButton.isHidden = text.count == 0 ? true : false
         }
     }
     
@@ -73,20 +87,21 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
     
     lazy var backgroudImageView: UIImageView = {
         var _backgroudImageView = UIImageView.init(image: UIImage.init(named: "widget_searchbar_textfield"))
-        _backgroudImageView.frame = CGRect.init(x: 10, y: 8, width: kScreenWidth - 20, height: 44 - 16)
+        _backgroudImageView.contentMode = .scaleToFill
         return _backgroudImageView
     }()
     
-    private lazy var searchTextField: ZSSearchTextField = {
-        var _searchTextField = ZSSearchTextField.init(frame: CGRect.init(x: kScreenWidth * 0.5 - 40, y: 0, width: kScreenWidth * 0.5, height: 44))
+    lazy var searchTextField: ZSSearchTextField = {
+        var _searchTextField = ZSSearchTextField.init()
         _searchTextField.canTouch = false
         _searchTextField.placeholder = "搜索"
         var searchIcon = UIImageView.init(image: UIImage.init(named: "SearchContactsBarIcon"))
         searchIcon.contentMode = .scaleAspectFit
-        searchIcon.bounds = CGRect.init(x: 0, y: 0, width: 30, height: 14)
+        searchIcon.bounds = CGRect.init(x: 0, y: 0, width: 30, height: 20)
         _searchTextField.leftView = searchIcon
         _searchTextField.leftViewMode = .always
         _searchTextField.font = UIFont.systemFont(ofSize: 16.0)
+        _searchTextField.autocorrectionType = UITextAutocorrectionType.no // 关闭系统键盘的自动联想
         _searchTextField.addTarget(self, action: #selector(textFieldDidChange), for: UIControlEvents.editingChanged)
         _searchTextField.delegate = self
         return _searchTextField
@@ -94,7 +109,6 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
     
     lazy var rightButton: UIButton = {
         var _rightButton = UIButton.init(type: UIButtonType.custom)
-        _rightButton.frame = CGRect.init(x: kScreenWidth - 38, y: 8, width: 28, height: 28)
         _rightButton.setImage(UIImage.init(named: "card_delete"), for: UIControlState.normal)
         _rightButton.addTarget(self, action: #selector(rightButtonClick), for: UIControlEvents.touchUpInside)
         _rightButton.isHidden = true
@@ -103,37 +117,77 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
     
     lazy var cancelButton: UIButton = {
         var _cancelButton = UIButton.init(type: UIButtonType.custom)
-        _cancelButton.frame = CGRect.init(x: kScreenWidth, y: 0, width: 40, height: 44)
         _cancelButton.titleLabel?.font = UIFont.systemFont(ofSize: 16)
-        _cancelButton.setTitle("取消 ", for: UIControlState.normal)
-        _cancelButton.setTitleColor(ZSColor(85, 183, 55, 1.0), for: UIControlState.normal)
+        _cancelButton.setTitle("取消", for: UIControlState.normal)
+        _cancelButton.setTitleColor(UIColor.init(R: 85, G: 183, B: 55, A: 1.0), for: UIControlState.normal)
         _cancelButton.addTarget(self, action: #selector(cancelButtonClick), for: UIControlEvents.touchUpInside)
         return _cancelButton
     }()
     
-    //  ❗️❗️❗️该方法是在协议中定义的，子类必须如果没有隐式继承该方法，就必须显示地写，而且加上 required 关键字
+    lazy var backButton: UIButton = {
+        var _backButton = UIButton.init(type: UIButtonType.custom)
+        // 图片宽是22
+        let sizeW = 44
+        _backButton.setImage(UIImage.init(named: "btn_navigationbar_back"), for: UIControlState.normal)
+        _backButton.addTarget(self, action: #selector(backButtonClick), for: UIControlEvents.touchUpInside)
+        return _backButton
+    }()
+    
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
     
     override init(frame: CGRect) {
-        let vFrame = CGRect.init(x: 0, y: 0, width:kScreenWidth , height: 44)
+        let vFrame = CGRect.init(x: 0, y: 0, width:SCREEN_WIDTH , height: 44)
         super.init(frame: vFrame)
-        self.backgroundColor = ZSColor(243, 243, 243, 1.0)
+        self.backgroundColor = UIColor.init(R: 243, G: 243, B: 243, A: 1.0)
         self.addSubview(backgroudImageView)
         self.addSubview(searchTextField)
         self.addSubview(rightButton)
         self.addSubview(cancelButton)
+        self.addSubview(backButton)
+        self.setupFrame()
+        NotificationCenter.default.addObserver(self, selector: #selector(resignSearchField), name: NSNotification.Name.init(SEARCH_RESIGN_NOTIFICATION_KEY), object: nil)
     }
     
-    func resignSearchField() {
-        self.searchTextField.resignFirstResponder()
+    func setupFrame() {
+        backgroudImageView.frame = CGRect.init(x: 10, y: 8, width: SCREEN_WIDTH - 20, height: 44 - 16)
+        searchTextField.frame = CGRect.init(x: SCREEN_WIDTH * 0.5 - 40, y: 0, width: SCREEN_WIDTH * 0.5, height: 44)
+        rightButton.frame = CGRect.init(x: SCREEN_WIDTH - 38, y: 8, width: 28, height: 28)
+        cancelButton.frame = CGRect.init(x: SCREEN_WIDTH, y: 0, width: 50, height: 44)
+        backButton.frame = CGRect.init(x: -34, y: 3, width: 44, height: 38)
+        
+        if showBack {
+            backButton.left = 0
+            backgroudImageView.left = backButton.right
+            backgroudImageView.width = SCREEN_WIDTH - backButton.right - 10
+        }
     }
     
-    // 回调方法
+    @objc func resignSearchField() {
+        if self.searchTextField.isFirstResponder {
+            self.searchTextField.resignFirstResponder()
+        }
+    }
+    
+    //MARK: 回调方法
     @objc func textFieldDidChange() {
-        text = self.searchTextField.text
-        delegate?.searchBar(self, textDidChange: self.searchTextField.text ?? "")
+        // 只保存无高亮状态下的文字
+        let markedRange = searchTextField.markedTextRange
+        if markedRange != nil {
+            if markedRange!.isEmpty == false {
+                return
+            }
+        }
+        if self.searchTextField.text == text { return }
+        text = self.searchTextField.text ?? ""
+        // 延迟0.25s调用，如果该时间内有多次输入，则只调用一次
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(callBakcDelegateTextChange), object: nil)
+        perform(#selector(callBakcDelegateTextChange), with: nil, afterDelay: 0.25)
+    }
+    
+    @objc func callBakcDelegateTextChange() {
+        delegate?.searchBar(self, textDidChange: text)
     }
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
@@ -145,10 +199,15 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
     }
     
     @objc func rightButtonClick() {
-        text = nil
+        text = ""
     }
     
     @objc func cancelButtonClick() {
         NotificationCenter.default.post(name: NSNotification.Name.init(SEARCH_CANCEL_NOTIFICATION_KEY), object: nil)
     }
+    
+    @objc func backButtonClick() {
+        
+    }
+    
 }
