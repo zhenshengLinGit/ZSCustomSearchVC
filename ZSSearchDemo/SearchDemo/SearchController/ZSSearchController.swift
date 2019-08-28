@@ -60,6 +60,7 @@ class ZSSearchViewController: UIViewController {
     var searchBarTapGesture: UITapGestureRecognizer!
     var isAddPanBackGesture: Bool = true // 是否添加滑动返回手势
     private var dealPanEvent = false // 是否处理滑动手势
+    var changeOffsetXView: UIView? // 处理view的OffsetX
     
     weak var delegate: ZSSearchViewControllerDelegate?
     
@@ -141,12 +142,22 @@ class ZSSearchViewController: UIViewController {
                 // 根据滑动的距离更改样式
                 let percent = theView.transform.tx / theView.size.width
                 searchBar.changeStyleWhenGestureBack(percent: percent)
+                if self.changeOffsetXView != nil {
+                    if percent >= 0 || percent <= 1 {
+                        let per_100_width: CGFloat = 0
+                        let per_0_width = self.changeOffsetXView!.width / 5
+                        self.changeOffsetXView!.left = (per_0_width + (per_100_width - per_0_width) * percent) * -1
+                    }
+                }
             }
         case .ended:
             // 当超过一半时，退出，并还原
             if theView.transform.tx > theView.size.width / 2 {
                 self.endSearch()
-                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.2) {
+                changeOffsetXView?.alpha = 0
+                UIView.animate(withDuration: 0.4, animations: {
+                    self.changeOffsetXView?.alpha = 1
+                }) { (finish) in
                     self.restoreOriginStyle(theView: theView)
                 }
             } else {
@@ -192,6 +203,10 @@ class ZSSearchViewController: UIViewController {
                 self.bgView.alpha = 1
             }) { (finish) in
                 self.delegate?.didPresentSearchController(self)
+                // 更改changeView的x值
+                if self.changeOffsetXView != nil {
+                    self.changeOffsetXView!.left = -(self.changeOffsetXView!.width / 5)
+                }
                 if let tabVc = self.searchBar.viewController?.tabBarController {
                     tabVc.tabBar.isHidden = true
                 }
@@ -206,6 +221,9 @@ class ZSSearchViewController: UIViewController {
     
     @objc func endSearch() {
         self.delegate?.willDismissSearchController(self)
+        if self.changeOffsetXView != nil {
+            self.changeOffsetXView!.left = 0
+        }
         // 移除自己，并显示tabBar
         self.view.removeFromSuperview()
         self.removeFromParentViewController()

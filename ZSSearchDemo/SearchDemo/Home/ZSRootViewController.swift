@@ -17,6 +17,7 @@ class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDa
         _searchController.searchBarBackgroudColor = UIColor.themeColor
         _searchController.searchBar.placeholder = "搜索"
         _searchController.searchBar.cancelButton.setTitleColor(UIColor.white, for: UIControlState.normal)
+        _searchController.changeOffsetXView = tableView
         _searchController.delegate = self
         _searchController.searchBar.delegate = self
         return _searchController
