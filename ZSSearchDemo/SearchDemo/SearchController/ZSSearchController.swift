@@ -58,6 +58,8 @@ class ZSSearchViewController: UIViewController {
     
     var searchResultsController: UIViewController?
     var searchBarTapGesture: UITapGestureRecognizer!
+    var isAddPanBackGesture: Bool = true // 是否添加滑动返回手势
+    private var dealPanEvent = false // 是否处理滑动手势
     
     weak var delegate: ZSSearchViewControllerDelegate?
     
@@ -74,13 +76,10 @@ class ZSSearchViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.addSubview(bgView)
-        self.searchResultsController?.view.frame = self.bgView.bounds
-        if self.searchResultsController != nil {
-            self.bgView.addSubview(self.searchResultsController!.view)
-            self.addChildViewController(self.searchResultsController!)
-        }
+        setupResultView()
         NotificationCenter.default.addObserver(self, selector: #selector(endSearch), name: NSNotification.Name.init(SEARCH_CANCEL_NOTIFICATION_KEY), object: nil)
     }
+    
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -89,7 +88,84 @@ class ZSSearchViewController: UIViewController {
         self.view.frame = CGRect.init(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
     }
     
+    func setupResultView() {
+        if self.searchResultsController != nil {
+            if let theView = self.searchResultsController?.view {
+                self.searchResultsController?.view.frame = self.bgView.bounds
+                self.bgView.addSubview(theView)
+                self.addChildViewController(self.searchResultsController!)
+                if isAddPanBackGesture {
+                    let resultViewPan = UIPanGestureRecognizer.init(target: self, action: #selector(panResultView(pan:)))
+                    self.searchResultsController?.view.addGestureRecognizer(resultViewPan)
+                    // 添加左侧阴影
+                    theView.viewShadowPath(shadowColor: UIColor.black, shadowOpacity: 0.4, shadowRadius: 3, shadowPathType: .left, shadowPathWidth: 3)
+                }
+            }
+        }
+    }
+    
     // event方法
+    @objc func panResultView(pan: UIPanGestureRecognizer) {
+        guard let theView = pan.view else {
+            return
+        }
+        switch pan.state {
+        case .began:
+            searchBar.resignSearchField()
+            let localPoint = pan.location(in: theView)
+            // 如果起始点大于100，则不处理事件
+            if localPoint.x > 100 {
+                dealPanEvent = false
+            } else {
+                dealPanEvent = true
+            }
+        case .changed:
+            if dealPanEvent {
+                let point = pan.translation(in: theView)
+                pan.setTranslation(CGPoint.zero, in: theView)
+                // 左滑时，如果view到了屏幕最左端，则不处理
+                if point.x < 0 {
+                    if theView.transform.tx <= 0 {
+                        restoreOriginStyle(theView: theView)
+                    } else {
+                        theView.transform = CGAffineTransform(translationX: point.x, y: 0).concatenating(theView.transform)
+                    }
+                } else {
+                    // 右滑时，如果view到了屏幕最右端，则不处理
+                    if theView.transform.tx >= theView.size.width {
+                        theView.transform = CGAffineTransform(translationX: theView.size.width, y: 0)
+                    } else {
+                        theView.transform = CGAffineTransform(translationX: point.x, y: 0).concatenating(theView.transform)
+                    }
+                }
+                // 根据滑动的距离更改样式
+                let percent = theView.transform.tx / theView.size.width
+                searchBar.changeStyleWhenGestureBack(percent: percent)
+            }
+        case .ended:
+            // 当超过一半时，退出，并还原
+            if theView.transform.tx > theView.size.width / 2 {
+                self.endSearch()
+                DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.2) {
+                    self.restoreOriginStyle(theView: theView)
+                }
+            } else {
+                // 小于一半时，动画还原
+                UIView.animate(withDuration: 0.1) {
+                    self.restoreOriginStyle(theView: theView)
+                }
+            }
+        default:
+            print("")
+        }
+        
+    }
+    
+    func restoreOriginStyle(theView: UIView) {
+        theView.transform = CGAffineTransform.identity
+        searchBar.restoreOriginStyle()
+    }
+    
     @objc func tapSearchBarAction() {
         self.delegate?.willPresentSearchController(self)
         // 让搜索框进入编辑状态

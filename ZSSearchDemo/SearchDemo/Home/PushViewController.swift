@@ -26,6 +26,7 @@ class PushViewController: UIViewController {
 //        self.navigationItem.titleView = self.searchBar
         self.view.addSubview(self.searchBar)
         self.view.backgroundColor = UIColor.orange
+        self.navigationItem.title = "push"
     }
 
 }

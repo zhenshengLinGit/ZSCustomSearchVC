@@ -47,7 +47,7 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
                 UIView.animate(withDuration: animateWhenChangeEditing ? 0.2 : 0, animations: {
                     self.searchTextField.left = self.backButton.right
                     self.rightButton.left = SCREEN_WIDTH - self.rightButton.width - self.cancelButton.width
-                    self.backgroudImageView.width = SCREEN_WIDTH - self.backButton.right - self.cancelButton.width
+                    self.backgroudImageView.width = self.backgourdImageViewWidth(isEditing: true)
                     self.cancelButton.left = SCREEN_WIDTH - self.cancelButton.width
                 }) { (finished) in
                     self.searchTextField.width = SCREEN_WIDTH - self.backButton.right - 10 - self.rightButton.width - self.cancelButton.width
@@ -61,7 +61,7 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
                 UIView.animate(withDuration: animateWhenChangeEditing ? 0.2 : 0, animations: {
                     self.searchTextField.left = SCREEN_WIDTH * 0.5 - 40
                     self.rightButton.left = SCREEN_WIDTH - 38
-                    self.backgroudImageView.width = SCREEN_WIDTH - self.backButton.right - 10
+                    self.backgroudImageView.width = self.backgourdImageViewWidth(isEditing: false)
                     self.cancelButton.left = SCREEN_WIDTH
                 }) { (finished) in
                     self.searchTextField.width = SCREEN_WIDTH * 0.5
@@ -161,6 +161,39 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
             backButton.left = 0
             backgroudImageView.left = backButton.right
             backgroudImageView.width = SCREEN_WIDTH - backButton.right - 10
+        }
+    }
+    
+    // 手势返回时，更改样式
+    func changeStyleWhenGestureBack(percent: CGFloat) {
+        let alpha: CGFloat = 0.7
+        cancelButton.alpha = alpha
+        rightButton.alpha = alpha
+        searchTextField.alpha = alpha
+        // 根据百分比设置输入框的宽度
+        if percent >= 0 || percent <= 1 {
+            let per_100_width = backgourdImageViewWidth(isEditing: false)
+            let per_0_width = backgourdImageViewWidth(isEditing: true)
+            backgroudImageView.width = per_0_width + (per_100_width - per_0_width) * percent
+        }
+    }
+    
+    // 还原初始样式
+    func restoreOriginStyle() {
+        cancelButton.alpha = 1
+        rightButton.alpha = 1
+        searchTextField.alpha = 1
+        // 只还原编辑状态
+        if isEditing {
+            backgroudImageView.width = backgourdImageViewWidth(isEditing: true)
+        }
+    }
+    
+    func backgourdImageViewWidth(isEditing: Bool) -> CGFloat {
+        if isEditing {
+            return SCREEN_WIDTH - self.backButton.right - self.cancelButton.width
+        } else {
+            return SCREEN_WIDTH - self.backButton.right - 10
         }
     }
     

@@ -48,6 +48,11 @@ class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDa
         self.view.insertSubview(tableView, belowSubview: searchController.searchBar)
     }
     
+    override func viewWillLayoutSubviews() {
+        super.viewWillLayoutSubviews()
+        tableView.height = view.height
+    }
+    
     override var preferredStatusBarStyle: UIStatusBarStyle {
         return .lightContent
     }

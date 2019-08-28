@@ -29,6 +29,16 @@ class ZSNavigationController: UINavigationController, UIGestureRecognizerDelegat
     }
     
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if gestureRecognizer == fullScreenPopGestureRecorgnizer {
+            if viewControllers.count <= 1 {
+                return false
+            }
+            let velocity = fullScreenPopGestureRecorgnizer.velocity(in: view)
+            print("velocity = \(velocity.x)")
+            if velocity.x <= 0 {
+                return false
+            }
+        }
         return true
     }
 }

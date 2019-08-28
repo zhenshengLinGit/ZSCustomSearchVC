@@ -14,6 +14,13 @@ class ZSSearchResultController: UIViewController {
         super.viewDidLoad()
 
         self.view.backgroundColor = UIColor.white
+        
+        let theView = UIView.init()
+        theView.frame = CGRect.init(x: 100, y: 100, width: 100, height: 100)
+        theView.backgroundColor = UIColor.cyan
+        view.addSubview(theView)
+        theView.viewShadowPath(shadowColor: UIColor.black, shadowOpacity: 0.4, shadowRadius: 3, shadowPathType: .left, shadowPathWidth: 2)
+        
     }
 
     override func didReceiveMemoryWarning() {

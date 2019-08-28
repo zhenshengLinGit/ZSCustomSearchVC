@@ -228,4 +228,45 @@ extension UIView {
     }
     
 }
- 
+
+
+// 给view添加视觉效果
+extension UIView {
+    enum ShadowPathType {
+        case top
+        case bottom
+        case left
+        case right
+        case around
+    }
+    func viewShadowPath(shadowColor: UIColor, shadowOpacity: Float, shadowRadius: CGFloat, shadowPathType: ShadowPathType, shadowPathWidth: CGFloat) {
+        
+        layer.masksToBounds = false
+        layer.shadowColor = shadowColor.cgColor
+        layer.shadowOpacity = shadowOpacity
+        layer.shadowOffset = CGSize.zero
+        layer.shadowRadius = shadowRadius
+        
+        var shadowRect = CGRect.zero
+        var originX, originY, sizeWith, sizeHeight: CGFloat
+        originX = 0
+        originY = 0
+        sizeWith = bounds.size.width
+        sizeHeight = bounds.size.height
+        
+        if (shadowPathType == .top) {
+            shadowRect = CGRect.init(x: originX, y: originY-shadowPathWidth/2, width: sizeWith, height: shadowPathWidth)
+        }else if (shadowPathType == .bottom){
+            shadowRect = CGRect.init(x: originY, y: sizeHeight-shadowPathWidth/2, width: sizeWith, height: shadowPathWidth)
+        }else if (shadowPathType == .left){
+            shadowRect = CGRect.init(x: originX-shadowPathWidth/2, y: originY, width: shadowPathWidth, height: sizeHeight)
+        }else if (shadowPathType == .right){
+            shadowRect = CGRect.init(x: sizeWith-shadowPathWidth/2, y: originY, width: shadowPathWidth, height: sizeHeight)
+        }else if (shadowPathType == .around){
+            shadowRect = CGRect.init(x: originX-shadowPathWidth/2, y: originY-shadowPathWidth/2, width: sizeWith+shadowPathWidth, height: sizeHeight+shadowPathWidth)
+        }
+        
+        let besierPath = UIBezierPath.init(rect: shadowRect)
+        layer.shadowPath = besierPath.cgPath
+    }
+}
