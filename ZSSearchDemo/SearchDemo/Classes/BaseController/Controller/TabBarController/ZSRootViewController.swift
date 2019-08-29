@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ZSRootViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, ZSSearchViewControllerDelegate, ZSSearchBarDelegate {
+class ZSRootViewController: ZSBaseViewController, UITableViewDelegate, UITableViewDataSource, ZSSearchViewControllerDelegate, ZSSearchBarDelegate {
 
 
     lazy var searchController: ZSSearchViewController = {

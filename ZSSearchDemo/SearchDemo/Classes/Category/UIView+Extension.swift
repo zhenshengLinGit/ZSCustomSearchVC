@@ -23,8 +23,8 @@ extension UIView: SelfAware {
     }()
 }
 
+//MARK: ====================  Frame ====================
 extension UIView {
-// ====================  Frame ====================
     //MARK: iPhone X适配属性
     /** 高度减去iPhone X底部不安全高度*/
     var safeAreaBottom: CGFloat {
@@ -61,10 +61,8 @@ extension UIView {
         }
     }
     
-    /****************************************************************************************************/
     //MARK: 尺寸信息以及尺寸更改
     //任何尺寸更改都不会改变视图的位置
-    
     var height: CGFloat {
         get {
             return self.frame.size.height
@@ -91,13 +89,9 @@ extension UIView {
             self.frame.size = newValue
         }
     }
-    //MARK: -
-    /****************************************************************************************************/
     
-    /****************************************************************************************************/
     //MARK: 位置信息以及位置更改
     //任何位置信息更改都不会改变视图的尺寸
-    
     var top: CGFloat {
         get {
             return self.frame.origin.y
@@ -162,13 +156,9 @@ extension UIView {
             self.center.y = newValue
         }
     }
-    //MARK: -
-    /****************************************************************************************************/
-    
-    /****************************************************************************************************/
+
     //MARK: 适应性布局设置
     //例如：当改变left位置的时候，自适应宽度好保持视图right位置不变
-    
     func autoLeft(_ new: CGFloat) {
         let widthChanged = left - new
         left = new
@@ -191,7 +181,7 @@ extension UIView {
         height -= heightChanged
     }
     
-// ====================  view所在的控制器 ====================
+    //MARK: view所在的控制器
     var viewController: UIViewController? {
         if let nextVC = next as? UIViewController {
             return nextVC
@@ -202,7 +192,7 @@ extension UIView {
         return nil
     }
     
-// ====================  触摸事件相关 ====================
+    //MARK: 触摸事件相关
     var unTouchRect: CGRect {
         set {
             objc_setAssociatedObject(self, &UN_TOUCH_RECT_KEY, newValue, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
@@ -230,7 +220,7 @@ extension UIView {
 }
 
 
-// 给view添加视觉效果
+//MARK: ====================  给view添加视觉效果 ====================
 extension UIView {
     enum ShadowPathType {
         case top
