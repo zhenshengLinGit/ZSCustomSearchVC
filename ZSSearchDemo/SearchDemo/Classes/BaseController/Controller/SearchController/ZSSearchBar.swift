@@ -102,6 +102,7 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
         _searchTextField.leftViewMode = .always
         _searchTextField.font = UIFont.systemFont(ofSize: 16.0)
         _searchTextField.autocorrectionType = UITextAutocorrectionType.no // 关闭系统键盘的自动联想
+        _searchTextField.returnKeyType = UIReturnKeyType.search
         _searchTextField.addTarget(self, action: #selector(textFieldDidChange), for: UIControlEvents.editingChanged)
         _searchTextField.delegate = self
         return _searchTextField
@@ -151,7 +152,8 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
     }
     
     func setupFrame() {
-        backgroudImageView.frame = CGRect.init(x: 10, y: 8, width: SCREEN_WIDTH - 20, height: 44 - 16)
+        let bgImageVTop = 7
+        backgroudImageView.frame = CGRect.init(x: 10, y: bgImageVTop, width: Int(SCREEN_WIDTH - 20), height: 44 - bgImageVTop * 2)
         searchTextField.frame = CGRect.init(x: SCREEN_WIDTH * 0.5 - 40, y: 0, width: SCREEN_WIDTH * 0.5, height: 44)
         rightButton.frame = CGRect.init(x: SCREEN_WIDTH - 38, y: 8, width: 28, height: 28)
         cancelButton.frame = CGRect.init(x: SCREEN_WIDTH, y: 0, width: 50, height: 44)
@@ -231,6 +233,11 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
         delegate?.searchBarTextDidEndEditing(self)
     }
     
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
+    }
+    
     @objc func rightButtonClick() {
         text = ""
     }
@@ -243,4 +250,18 @@ class ZSSearchBar: UIView, UITextFieldDelegate {
         
     }
     
+    // 移除按钮默认的target行为
+    func removeBtnDefaultTargetAction(btns: UIButton...) {
+        for btn in btns {
+            if btn === rightButton {
+                rightButton.removeTarget(self, action: #selector(rightButtonClick), for: UIControlEvents.touchUpInside)
+            } else if btn == cancelButton {
+                cancelButton.removeTarget(self, action: #selector(cancelButtonClick), for: UIControlEvents.touchUpInside)
+            } else if btn == backButton {
+                backButton.removeTarget(self, action: #selector(backButtonClick), for: UIControlEvents.touchUpInside)
+            }
+        }
+    }
+    
+
 }

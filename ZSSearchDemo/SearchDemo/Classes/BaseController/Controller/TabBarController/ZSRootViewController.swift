@@ -82,20 +82,7 @@ class ZSRootViewController: ZSBaseViewController, UITableViewDelegate, UITableVi
     
     //MARK: scrollviewDelegate
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let contentOffsetYContainInset = scrollView.contentOffset.y + scrollView.contentInset.top
-        print("contentOffsetYContainInset = \(contentOffsetYContainInset)")
-        let maxY = searchController.searchBar.height
-        var adjustY = CGFloat(0)
-        if contentOffsetYContainInset > 0 {
-            adjustY = min(contentOffsetYContainInset, maxY)
-            adjustY *= -1
-        } else {
-            adjustY = CGFloat(0)
-        }
-        // 判断searchBar不在编辑状态下，才调整top值。（编辑状态下由searchController来调整）
-        if searchController.searchBar.top != adjustY, !searchController.searchBar.isEditing {
-            searchController.searchBar.top = adjustY
-        }
+        searchController.scrollViewDidScroll(scrollView)
     }
     
     // 搜索关键字输入

@@ -8,7 +8,7 @@
 
 import UIKit
 
-class PushViewController: UIViewController {
+class PushViewController: ZSBaseViewController {
 
     lazy var searchBar: ZSSearchBar = {
         var _searchBar = ZSSearchBar.init(frame: CGRect.zero)
@@ -21,12 +21,13 @@ class PushViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
-//        self.navigationItem.titleView = self.searchBar
         self.view.addSubview(self.searchBar)
         self.view.backgroundColor = UIColor.orange
         self.navigationItem.title = "push"
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        self.registerNavigationBarHidden()
+    }
 }

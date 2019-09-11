@@ -78,9 +78,8 @@ class ZSSearchViewController: UIViewController {
         super.viewDidLoad()
         self.view.addSubview(bgView)
         setupResultView()
-        NotificationCenter.default.addObserver(self, selector: #selector(endSearch), name: NSNotification.Name.init(SEARCH_CANCEL_NOTIFICATION_KEY), object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(endSearch(noti:)), name: NSNotification.Name.init(SEARCH_CANCEL_NOTIFICATION_KEY), object: nil)
     }
-    
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -102,6 +101,26 @@ class ZSSearchViewController: UIViewController {
                     theView.viewShadowPath(shadowColor: UIColor.black, shadowOpacity: 0.4, shadowRadius: 3, shadowPathType: .left, shadowPathWidth: 3)
                 }
             }
+        }
+    }
+    
+    // 当搜索框置于tableview的顶部（为兄弟控件）的时候，搜索框的位置要跟随tableview移动而移动，并且调整tableview的contentInset
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // 调整searchview的位置，使tableview上滑时跟随，下滑时悬浮固定
+        let contentOffsetYContainInset = scrollView.contentOffset.y + searchBar.height
+        let maxY = searchBar.height
+        var adjustY = CGFloat(0)
+        if contentOffsetYContainInset > 0 {
+            adjustY = min(contentOffsetYContainInset, maxY)
+            adjustY *= -1
+        } else {
+            adjustY = CGFloat(0)
+        }
+        // 判断searchBar不在编辑状态下，才调整top值。（编辑状态下由dgSearchController来调整）
+        if searchBar.top != adjustY, !searchBar.isEditing {
+            searchBar.top = adjustY
+            // 更改contentIset的Top值，以确保当上滑后，tableview的section悬浮能保持在搜索框的底部
+            scrollView.contentInset.top = searchBar.bottom
         }
     }
     
@@ -152,8 +171,10 @@ class ZSSearchViewController: UIViewController {
             }
         case .ended:
             // 当超过一半时，退出，并还原
-            if theView.transform.tx > theView.size.width / 2 {
-                self.endSearch()
+            let velocity = pan.velocity(in: theView)
+            print("velocity = \(velocity)")
+            if theView.transform.tx + velocity.x / 2 > theView.size.width / 2 {
+                self.endSearch(noti: nil)
                 changeOffsetXView?.alpha = 0
                 UIView.animate(withDuration: 0.4, animations: {
                     self.changeOffsetXView?.alpha = 1
@@ -202,7 +223,6 @@ class ZSSearchViewController: UIViewController {
                 self.searchBarBackgroudViewWhenEdit.top = 0
                 self.bgView.alpha = 1
             }) { (finish) in
-                self.delegate?.didPresentSearchController(self)
                 // 更改changeView的x值
                 if self.changeOffsetXView != nil {
                     self.changeOffsetXView!.left = -(self.changeOffsetXView!.width / 5)
@@ -210,6 +230,8 @@ class ZSSearchViewController: UIViewController {
                 if let tabVc = self.searchBar.viewController?.tabBarController {
                     tabVc.tabBar.isHidden = true
                 }
+                self.delegate?.didPresentSearchController(self)
+                self.searchResultsController?.didPresentSearchView()
             }
         }
         self.searchBarTapGesture.isEnabled = false
@@ -219,7 +241,8 @@ class ZSSearchViewController: UIViewController {
         self.searchBar.resignSearchField()
     }
     
-    @objc func endSearch() {
+    @objc func endSearch(noti: Notification?) {
+        if searchBar.isEditing == false { return }
         self.delegate?.willDismissSearchController(self)
         if self.changeOffsetXView != nil {
             self.changeOffsetXView!.left = 0
@@ -248,7 +271,7 @@ class ZSSearchViewController: UIViewController {
         }
         self.searchBarTapGesture.isEnabled = true
     }
-    
+
 }
 
 
@@ -266,4 +289,7 @@ extension UIViewController {
             return nil
         }
     }
+    
+    // 搜索界面弹出通知
+    @objc func didPresentSearchView() {}
 }
